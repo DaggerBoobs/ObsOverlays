@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Stream Starting Soon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100vw; height:100vh; overflow:hidden;
+      background:#0a0818; font-family:'Exo 2', sans-serif; color:#fff;
+    }
+
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0;
+      background:
+        radial-gradient(ellipse 55% 45% at 25% 15%, rgba(120,60,255,0.22) 0%, transparent 60%),
+        radial-gradient(ellipse 45% 40% at 80% 85%, rgba(120,60,255,0.14) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 30% at 50% 115%, rgba(245,200,66,0.08) 0%, transparent 50%);
+    }
+    body::after {
+      content:''; position:fixed; inset:0; z-index:1; pointer-events:none;
+      background:repeating-linear-gradient(to bottom,
+        transparent 0, transparent 3px,
+        rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 6px);
+    }
+
+    .particles { position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+    .p {
+      position:absolute; border-radius:50%; opacity:0;
+      animation:rise var(--d) ease-in infinite var(--dl);
+    }
+    @keyframes rise {
+      0%   { opacity:0; transform:translateY(105vh) scale(0); }
+      8%   { opacity:0.65; }
+      92%  { opacity:0.1; }
+      100% { opacity:0; transform:translateY(-5vh) scale(2); }
+    }
+
+    .grid {
+      position:relative; z-index:2;
+      width:100vw; height:100vh;
+      display:grid;
+      grid-template-rows: 22vh 12vh 1fr 6vh;
+      grid-template-columns: 1fr;
+      grid-template-areas:
+        "hero"
+        "cmdbar"
+        "lower"
+        "foot";
+    }
+
+    /* HERO */
+    .hero {
+      grid-area:hero;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:1.2vh; position:relative;
+      padding:0 3vw;
+      border-bottom:2px solid rgba(160,112,255,0.35);
+      background:rgba(10,8,24,0.55);
+    }
+    .hero::after {
+      content:''; position:absolute; bottom:-2px; left:0; right:0; height:2px;
+      background:linear-gradient(90deg, transparent, #a070ff, #f5c842, #a070ff, transparent);
+      animation:glowbar 4s ease-in-out infinite;
+    }
+    @keyframes glowbar { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+    .hero-title {
+      font-size:8.5vw; font-weight:900; line-height:1;
+      text-align:center; color:#fff;
+      text-shadow:0 0 60px rgba(140,80,255,0.6), 0 0 120px rgba(140,80,255,0.25);
+    }
+    .timer-row {
+      display:flex; align-items:center; gap:1.8vw;
+      background:rgba(26,18,60,0.85);
+      border:2px solid rgba(160,112,255,0.35);
+      border-radius:1vw;
+      padding:0.8vh 3vw;
+      box-shadow:0 0 40px rgba(160,112,255,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .timer-label {
+      font-size:1.5vw; font-weight:800;
+      letter-spacing:0.20em; text-transform:uppercase;
+      color:#b0a8d8;
+    }
+    .timer-num {
+      font-size:4.5vw; font-weight:900;
+      color:#f5c842;
+      text-shadow:0 0 30px rgba(245,200,66,0.55);
+      font-variant-numeric:tabular-nums;
+      min-width:4ch; text-align:center;
+    }
+    .timer-num.urgent {
+      color:#ff4455;
+      text-shadow:0 0 30px rgba(255,68,85,0.6);
+      animation:flash 0.5s ease-in-out infinite;
+    }
+    @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .progress-track {
+      width:22vw; height:0.55vh;
+      background:rgba(160,112,255,0.18);
+      border-radius:999px; overflow:hidden;
+    }
+    .progress-fill {
+      height:100%; width:100%; transition:width 1s linear;
+      background:linear-gradient(90deg,#a070ff,#f5c842);
+      box-shadow:0 0 12px rgba(160,112,255,0.5);
+    }
+    .live {
+      position:absolute; top:1.5vh; right:2vw;
+      display:flex; align-items:center; gap:0.7vw;
+      background:rgba(46,204,113,0.12);
+      border:2px solid rgba(46,204,113,0.4);
+      border-radius:0.7vw;
+      padding:0.7vh 1.6vw;
+      font-size:1.3vw; font-weight:900;
+      letter-spacing:0.18em; color:#2ecc71;
+    }
+    .live-dot {
+      width:0.65vw; height:0.65vw; border-radius:50%; background:#2ecc71;
+      animation:pg 1.5s ease-in-out infinite;
+    }
+    @keyframes pg {
+      0%,100%{box-shadow:0 0 0 0 rgba(46,204,113,.55);} 50%{box-shadow:0 0 0 0.4vw rgba(46,204,113,0);}
+    }
+
+    /* COMMANDS BAR */
+    .cmdbar {
+      grid-area:cmdbar;
+      position:relative;
+      border-bottom:2px solid rgba(160,112,255,0.3);
+      background:rgba(16,10,40,0.85);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns: 19vw 1fr;
+      align-items:stretch;
+    }
+    .cmdbar::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:2px;
+      background:linear-gradient(90deg, transparent, #f5c842, #a070ff, #f5c842, transparent);
+      animation:glowbar 4s ease-in-out infinite reverse;
+    }
+    .cmdbar-label {
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      padding:0 1.6vw 0 2vw;
+      border-right:2px solid rgba(160,112,255,0.25);
+      gap:0.45vh;
+      text-align:center;
+    }
+    .cmdbar-label-text {
+      font-size:1.8vw; font-weight:900;
+      letter-spacing:0.18em; text-transform:uppercase;
+      color:#f5c842; text-shadow:0 0 16px rgba(245,200,66,0.35);
+      line-height:1.1;
+      white-space:nowrap;
+    }
+    .cmdbar-label-sub {
+      font-size:1vw; font-weight:800;
+      letter-spacing:0.10em; text-transform:uppercase;
+      color:#7a72aa;
+      line-height:1.2;
+    }
+    .dots { display:flex; gap:0.35vw; align-items:center; margin-top:0.3vh; }
+    .dot {
+      width:0.42vw; height:0.42vw; border-radius:50%;
+      background:rgba(160,112,255,0.25);
+      transition:background 0.3s, box-shadow 0.3s;
+    }
+    .dot.on { background:#a070ff; box-shadow:0 0 8px rgba(160,112,255,0.8); }
+
+    .cmdbar-slides { position:relative; min-width:0; }
+    .cmdbar-slide {
+      position:absolute; inset:0;
+      display:grid; grid-template-columns: minmax(0, 16vw) 1fr;
+      align-items:center;
+      padding:0 2vw;
+      gap:1.4vw;
+      opacity:0; transform:translateX(1.5vw);
+      transition:opacity 0.6s ease, transform 0.6s ease;
+      pointer-events:none;
+    }
+    .cmdbar-slide.on { opacity:1; transform:translateX(0); pointer-events:auto; }
+    .cmd-chip-wrap {
+      display:flex; align-items:center; justify-content:center;
+      min-width:0;
+    }
+    .cmd-chip {
+      width:100%;
+      background:rgba(160,112,255,0.16);
+      border:2px solid rgba(160,112,255,0.55);
+      border-radius:0.8vw;
+      padding:0.55vh 1vw;
+      font-size:2.2vw; font-weight:900;
+      color:#c090ff;
+      text-shadow:0 0 22px rgba(160,112,255,0.7);
+      box-shadow:0 0 24px rgba(160,112,255,0.15), inset 0 1px 0 rgba(255,255,255,0.07);
+      white-space:nowrap;
+      text-align:center;
+    }
+    .cmd-chip.pink {
+      background:rgba(255,121,198,0.13);
+      border-color:rgba(255,121,198,0.55);
+      color:#ff79c6;
+      text-shadow:0 0 22px rgba(255,121,198,0.7);
+      box-shadow:0 0 24px rgba(255,121,198,0.15), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .cmd-chip.gold {
+      background:rgba(245,200,66,0.13);
+      border-color:rgba(245,200,66,0.5);
+      color:#f5c842;
+      text-shadow:0 0 22px rgba(245,200,66,0.6);
+      box-shadow:0 0 24px rgba(245,200,66,0.12), inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+    .cmd-info {
+      display:flex; flex-direction:column; gap:0.25vh;
+      min-width:0;
+    }
+    .cmd-action {
+      font-size:1vw; font-weight:800;
+      letter-spacing:0.16em; text-transform:uppercase;
+      color:#9080cc; line-height:1.15;
+    }
+    .cmd-desc {
+      font-size:1.75vw; font-weight:700;
+      color:#ffffff; line-height:1.28;
+      max-width:42ch;
+    }
+    .cmd-desc b { font-weight:900; }
+    .cmd-desc b.goldword, .cmd-desc .goldword { color:#f5c842 !important; text-shadow:0 0 14px rgba(245,200,66,0.55); }
+    .cmd-desc b.pinkword, .cmd-desc .pinkword { color:#ff79c6 !important; text-shadow:0 0 14px rgba(255,121,198,0.55); }
+    .goldword { color:#f5c842; text-shadow:0 0 14px rgba(245,200,66,0.55); }
+    .pinkword { color:#ff79c6; text-shadow:0 0 14px rgba(255,121,198,0.55); font-weight:900; }
+
+
+    /* LOWER */
+    .lower {
+      grid-area:lower;
+      display:grid;
+      grid-template-columns:62% 1fr;
+      min-height:0;
+    }
+
+    /* CLIPS */
+    .clips {
+      border-right:2px solid rgba(160,112,255,0.3);
+      background:rgba(14,10,36,0.7);
+      display:flex; flex-direction:column; min-height:0;
+    }
+    .clips-header {
+      padding:1.5vh 2.5vw;
+      border-bottom:1px solid rgba(160,112,255,0.2);
+      background:rgba(120,80,255,0.07);
+      flex-shrink:0;
+    }
+    .clips-title {
+      font-size:1.6vw; font-weight:800;
+      letter-spacing:0.16em; text-transform:uppercase;
+      color:#b0a8d8;
+    }
+    .clips-body { flex:1; min-height:0; position:relative; }
+    .clips-body video { width:100%; height:100%; object-fit:cover; display:block; }
+    .clips-ph {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.5vh;
+      background:rgba(10,8,24,0.8);
+      pointer-events:none; transition:opacity 0.4s;
+    }
+    .clips-ph.hidden { opacity:0; }
+    .clips-ph-icon { font-size:4vw; opacity:0.22; }
+    .clips-ph-text { font-size:1.8vw; font-weight:800; color:#ddd8ff; }
+    .clips-ph-sub  { font-size:1vw; font-weight:700; color:#7a72aa; text-align:center; max-width:30ch; line-height:1.6; }
+    input[type="file"] { display:none; }
+
+    /* EMPTY CHAT BOX */
+    .chatbox {
+      background:rgba(14,10,36,0.85);
+      display:flex; flex-direction:column; min-height:0;
+      position:relative;
+    }
+    .chatbox-header {
+      padding:1.5vh 2vw;
+      border-bottom:1px solid rgba(160,112,255,0.2);
+      background:rgba(120,80,255,0.07);
+      flex-shrink:0;
+      display:flex; align-items:center; gap:0.8vw;
+    }
+    .chatbox-title {
+      font-size:1.6vw; font-weight:800;
+      letter-spacing:0.16em; text-transform:uppercase;
+      color:#b0a8d8;
+      display:flex; align-items:center; gap:0.7vw;
+    }
+    .chat-pulse {
+      width:0.55vw; height:0.55vw; border-radius:50%;
+      background:#a070ff;
+      animation:chatpulse 2s ease-in-out infinite;
+    }
+    @keyframes chatpulse {
+      0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(160,112,255,0.5);} 50%{opacity:0.5; box-shadow:0 0 0 0.3vw rgba(160,112,255,0);}
+    }
+    .chat-empty {
+      flex:1; min-height:0;
+      display:block;
+    }
+
+    /* FOOTER */
+    .footer {
+      grid-area:foot;
+      display:flex; align-items:center; justify-content:center;
+      border-top:1px solid rgba(160,112,255,0.2);
+      background:rgba(10,8,24,0.5);
+    }
+    .footer-text {
+      font-size:1.2vw; font-weight:700;
+      color:#7a72aa; letter-spacing:0.05em; text-align:center;
+    }
+    .footer-text .hl { color:#a070ff; }
+    .footer-text .hg { color:#f5c842; }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="grid">
+
+  <div class="hero">
+    <div class="live"><span class="live-dot"></span>LIVE</div>
+    <div class="hero-title">Starting Soon</div>
+    <div class="timer-row">
+      <span class="timer-label">Starting In</span>
+      <span class="timer-num" id="timerNum">3:00</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+
+  <div class="cmdbar">
+    <div class="cmdbar-label">
+      <span class="cmdbar-label-text">⚡ Commands</span>
+      <span class="cmdbar-label-sub">Use these in chat</span>
+      <div class="dots" id="dots"></div>
+    </div>
+    <div class="cmdbar-slides" id="slides">
+
+      <div class="cmdbar-slide on">
+        <div class="cmd-chip-wrap"><div class="cmd-chip">!checkin</div></div>
+        <div class="cmd-info">
+          <span class="cmd-action">Check In</span>
+          <span class="cmd-desc">Check in to earn <b class="goldword">Dabloobs</b> and let everyone know you made it.</span>
+        </div>
+      </div>
+
+      <div class="cmdbar-slide">
+        <div class="cmd-chip-wrap"><div class="cmd-chip gold">!shop</div></div>
+        <div class="cmd-info">
+          <span class="cmd-action">Open Shop</span>
+          <span class="cmd-desc">Spend your <b class="goldword">Dabloobs</b> on chaos and rewards.</span>
+        </div>
+      </div>
+
+      <div class="cmdbar-slide">
+        <div class="cmd-chip-wrap"><div class="cmd-chip">^pp</div></div>
+        <div class="cmd-info">
+          <span class="cmd-action">PP Size</span>
+          <span class="cmd-desc">Type it and see what the chat gods decide 😂</span>
+        </div>
+      </div>
+
+      <div class="cmdbar-slide">
+        <div class="cmd-chip-wrap"><div class="cmd-chip pink">^boobie</div></div>
+        <div class="cmd-info">
+          <span class="cmd-action">Boobie Size</span>
+          <span class="cmd-desc">Type it in chat and let destiny reveal your boobie size 👀</span>
+        </div>
+      </div>
+
+      <div class="cmdbar-slide">
+        <div class="cmd-chip-wrap"><div class="cmd-chip">!box</div></div>
+        <div class="cmd-info">
+          <span class="cmd-action">Box Chat</span>
+          <span class="cmd-desc">Challenge others in chat and <b>box for <span class="goldword">Dabloobs</span></b>.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="lower">
+    <div class="clips">
+      <div class="clips-header">
+        <span class="clips-title">🎬 Pre-Stream Clips</span>
+      </div>
+      <div class="clips-body">
+        <video id="videoEl" autoplay playsinline muted></video>
+        <div class="clips-ph" id="clipsPh">
+          <span class="clips-ph-icon">🎬</span>
+          <span class="clips-ph-text">Pre-Stream Clips</span>
+          <span class="clips-ph-sub">Click to load your video clips — plays randomly on loop</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chatbox">
+      <div class="chatbox-header">
+        <span class="chatbox-title"><span class="chat-pulse"></span>💬 Chat</span>
+      </div>
+      <div class="chat-empty"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">
+      Stream starting in <span class="hg" id="footerTimer">3:00</span>
+      &nbsp;·&nbsp; Type <span class="hl">!checkin</span> to say hey!
+      &nbsp;·&nbsp; Spend your <span class="hg">Dabloobs</span> with <span class="hl">!shop</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+!function(){
+  const c=document.getElementById('particles'),cols=['#a070ff','#f5c842','#7744dd','#5533bb'];
+  for(let i=0;i<55;i++){
+    const p=document.createElement('div'); p.className='p';
+    const s=1+Math.random()*3;
+    p.style.cssText=`left:${Math.random()*100}vw;width:${s}px;height:${s}px;background:${cols[~~(Math.random()*4)]};`;
+    p.style.setProperty('--d',(8+Math.random()*12)+'s');
+    p.style.setProperty('--dl',(Math.random()*14)+'s');
+    c.appendChild(p);
+  }
+}();
+
+const TOTAL=180; let left=TOTAL;
+const tEl=document.getElementById('timerNum');
+const fEl=document.getElementById('footerTimer');
+const bar=document.getElementById('progressFill');
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+setInterval(()=>{
+  if(left<=0){tEl.classList.add('urgent');return;}
+  left--;
+  const t=fmt(left); tEl.textContent=fEl.textContent=t;
+  bar.style.width=((left/TOTAL)*100)+'%';
+  if(left<=30)tEl.classList.add('urgent');
+},1000);
+
+// Auto-detect which clips exist out of clip1.mp4 -> clip100.mp4
+const vid = document.getElementById('videoEl');
+const ph  = document.getElementById('clipsPh');
+let availableClips = [];
+let checking = 0;
+const TOTAL_SLOTS = 100;
+
+function checkClip(n) {
+  return new Promise(resolve => {
+    const t = document.createElement('video');
+    const src = `videos/clip${n}.mp4`;
+    t.onloadedmetadata = () => { availableClips.push(src); resolve(); };
+    t.onerror = () => resolve();
+    t.preload = 'metadata';
+    t.src = src;
+    // timeout in case it hangs
+    setTimeout(resolve, 3000);
+  });
+}
+
+async function detectAndPlay() {
+  const checks = [];
+  for (let i = 1; i <= TOTAL_SLOTS; i++) checks.push(checkClip(i));
+  await Promise.all(checks);
+  if (availableClips.length > 0) {
+    playRandom();
+  }
+}
+
+function playRandom() {
+  if (!availableClips.length) return;
+  const src = availableClips[Math.floor(Math.random() * availableClips.length)];
+  vid.src = src;
+  vid.play().catch(() => {});
+  ph.classList.add('hidden');
+}
+
+vid.addEventListener('ended', playRandom);
+vid.addEventListener('error', playRandom);
+
+detectAndPlay();
+
+const slideEls=document.querySelectorAll('.cmdbar-slide');
+const dotsEl=document.getElementById('dots');
+let cur=0;
+slideEls.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' on':'');
+  dotsEl.appendChild(d);
+});
+const dotEls=dotsEl.querySelectorAll('.dot');
+function goTo(n){
+  slideEls[cur].classList.remove('on'); dotEls[cur].classList.remove('on');
+  cur=(n+slideEls.length)%slideEls.length;
+  slideEls[cur].classList.add('on'); dotEls[cur].classList.add('on');
+}
+function schedNext(){ setTimeout(()=>{goTo(cur+1);schedNext();},10000+Math.random()*5000); }
+schedNext();
+</script>
+</body>
+</html>
