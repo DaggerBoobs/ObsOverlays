@@ -70,7 +70,7 @@
     @keyframes glowbar { 0%,100%{opacity:0.5} 50%{opacity:1} }
 
     .hero-title {
-      font-size:8.5vw; font-weight:900; line-height:1;
+      font-size:clamp(48px, 5vw, 110px); font-weight:900; line-height:0.95;
       text-align:center; color:#fff;
       text-shadow:0 0 60px rgba(140,80,255,0.6), 0 0 120px rgba(140,80,255,0.25);
     }
@@ -79,16 +79,16 @@
       background:rgba(26,18,60,0.85);
       border:2px solid rgba(160,112,255,0.35);
       border-radius:1vw;
-      padding:0.8vh 3vw;
+      padding:0.5vh 2vw;
       box-shadow:0 0 40px rgba(160,112,255,0.3), inset 0 1px 0 rgba(255,255,255,0.06);
     }
     .timer-label {
-      font-size:1.5vw; font-weight:800;
+      font-size:1.1vw; font-weight:800;
       letter-spacing:0.20em; text-transform:uppercase;
       color:#b0a8d8;
     }
     .timer-num {
-      font-size:4.5vw; font-weight:900;
+      font-size:2.8vw; font-weight:900;
       color:#f5c842;
       text-shadow:0 0 30px rgba(245,200,66,0.55);
       font-variant-numeric:tabular-nums;
@@ -101,7 +101,7 @@
     }
     @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .progress-track {
-      width:22vw; height:0.55vh;
+      width:16vw; height:0.5vh;
       background:rgba(160,112,255,0.18);
       border-radius:999px; overflow:hidden;
     }
@@ -117,7 +117,7 @@
       border:2px solid rgba(46,204,113,0.4);
       border-radius:0.7vw;
       padding:0.7vh 1.6vw;
-      font-size:1.3vw; font-weight:900;
+      font-size:1vw; font-weight:900;
       letter-spacing:0.18em; color:#2ecc71;
     }
     .live-dot {
@@ -152,7 +152,7 @@
       text-align:center;
     }
     .cmdbar-label-text {
-      font-size:1.8vw; font-weight:900;
+      font-size:1.3vw; font-weight:900;
       letter-spacing:0.18em; text-transform:uppercase;
       color:#f5c842; text-shadow:0 0 16px rgba(245,200,66,0.35);
       line-height:1.1;
@@ -175,7 +175,7 @@
     .cmdbar-slides { position:relative; min-width:0; }
     .cmdbar-slide {
       position:absolute; inset:0;
-      display:grid; grid-template-columns: minmax(0, 16vw) 1fr;
+      display:grid; grid-template-columns: minmax(0, 14vw) 1fr;
       align-items:center;
       padding:0 2vw;
       gap:1.4vw;
@@ -194,7 +194,7 @@
       border:2px solid rgba(160,112,255,0.55);
       border-radius:0.8vw;
       padding:0.55vh 1vw;
-      font-size:2.2vw; font-weight:900;
+      font-size:1.6vw; font-weight:900;
       color:#c090ff;
       text-shadow:0 0 22px rgba(160,112,255,0.7);
       box-shadow:0 0 24px rgba(160,112,255,0.15), inset 0 1px 0 rgba(255,255,255,0.07);
@@ -220,14 +220,14 @@
       min-width:0;
     }
     .cmd-action {
-      font-size:1vw; font-weight:800;
+      font-size:0.85vw; font-weight:800;
       letter-spacing:0.16em; text-transform:uppercase;
       color:#9080cc; line-height:1.15;
     }
     .cmd-desc {
-      font-size:1.75vw; font-weight:700;
+      font-size:1.3vw; font-weight:700;
       color:#ffffff; line-height:1.28;
-      max-width:42ch;
+      max-width:36ch;
     }
     .cmd-desc b { font-weight:900; }
     .cmd-desc b.goldword, .cmd-desc .goldword { color:#f5c842 !important; text-shadow:0 0 14px rgba(245,200,66,0.55); }
@@ -257,7 +257,7 @@
       flex-shrink:0;
     }
     .clips-title {
-      font-size:1.6vw; font-weight:800;
+      font-size:1.1vw; font-weight:800;
       letter-spacing:0.16em; text-transform:uppercase;
       color:#b0a8d8;
     }
@@ -270,9 +270,9 @@
       pointer-events:none; transition:opacity 0.4s;
     }
     .clips-ph.hidden { opacity:0; }
-    .clips-ph-icon { font-size:4vw; opacity:0.22; }
-    .clips-ph-text { font-size:1.8vw; font-weight:800; color:#ddd8ff; }
-    .clips-ph-sub  { font-size:1vw; font-weight:700; color:#7a72aa; text-align:center; max-width:30ch; line-height:1.6; }
+    .clips-ph-icon { font-size:2.8vw; opacity:0.22; }
+    .clips-ph-text { font-size:1.3vw; font-weight:800; color:#ddd8ff; }
+    .clips-ph-sub  { font-size:0.85vw; font-weight:700; color:#7a72aa; text-align:center; max-width:30ch; line-height:1.6; }
     input[type="file"] { display:none; }
 
     /* EMPTY CHAT BOX */
@@ -289,10 +289,10 @@
       display:flex; align-items:center; gap:0.8vw;
     }
     .chatbox-title {
-      font-size:1.6vw; font-weight:800;
+      font-size:1.1vw; font-weight:800;
       letter-spacing:0.16em; text-transform:uppercase;
       color:#b0a8d8;
-      display:flex; align-items:center; gap:0.7vw;
+      display:flex; align-items:center; gap:0.5vw;
     }
     .chat-pulse {
       width:0.55vw; height:0.55vw; border-radius:50%;
@@ -315,11 +315,29 @@
       background:rgba(10,8,24,0.5);
     }
     .footer-text {
-      font-size:1.2vw; font-weight:700;
+      font-size:1vw; font-weight:700;
       color:#7a72aa; letter-spacing:0.05em; text-align:center;
     }
     .footer-text .hl { color:#a070ff; }
     .footer-text .hg { color:#f5c842; }
+
+
+    @media (max-height: 1080px) {
+      .grid { grid-template-rows: 20vh 11vh 1fr 5vh; }
+      .hero { gap:0.8vh; }
+      .hero-title { font-size:clamp(44px, 4.6vw, 96px); }
+      .timer-row { padding:0.45vh 1.6vw; gap:1.2vw; }
+      .timer-label { font-size:1vw; }
+      .timer-num { font-size:2.5vw; }
+      .progress-track { width:14vw; }
+      .cmdbar { grid-template-columns: 18vw 1fr; }
+      .cmdbar-label-text { font-size:1.2vw; }
+      .cmdbar-label-sub { font-size:0.85vw; }
+      .cmd-chip { font-size:1.45vw; }
+      .cmd-action { font-size:0.78vw; }
+      .cmd-desc { font-size:1.15vw; }
+    }
+
   </style>
 </head>
 <body>
