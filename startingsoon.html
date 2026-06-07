@@ -495,9 +495,9 @@ async function detectAndPlay() {
   }
 }
 
-// Start muted so autoplay works immediately on page load.
-// Audio unlocks the first time the user clicks anywhere — this satisfies
-// the browser's autoplay policy and lets OBS capture audio normally.
+// OBS CEF blocks autoplay with audio. We use a silent AudioContext trick
+// to auto-unlock audio without needing a click. Retries every second for
+// up to 10 seconds to account for OBS load time.
 let audioUnlocked = false;
 vid.muted = true;
 
@@ -507,15 +507,35 @@ function unlockAudio() {
   vid.muted = false;
   vid.volume = 1.0;
   if (vid.paused && availableClips.length) vid.play().catch(() => {});
-  document.removeEventListener('click', unlockAudio);
 }
+
+function tryAutoUnlock() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src2 = ctx.createBufferSource();
+    src2.buffer = buf;
+    src2.connect(ctx.destination);
+    src2.start(0);
+    ctx.resume().then(() => { unlockAudio(); }).catch(() => {});
+  } catch(e) {}
+}
+
+let unlockAttempts = 0;
+const unlockInterval = setInterval(() => {
+  if (audioUnlocked) { clearInterval(unlockInterval); return; }
+  if (unlockAttempts >= 10) { clearInterval(unlockInterval); return; }
+  tryAutoUnlock();
+  unlockAttempts++;
+}, 1000);
+
 document.addEventListener('click', unlockAudio);
 
 function playRandom() {
   if (!availableClips.length) return;
   const src = availableClips[Math.floor(Math.random() * availableClips.length)];
   vid.src = src;
-  vid.muted = !audioUnlocked; // stay muted until user click unlocks audio
+  vid.muted = !audioUnlocked;
   vid.play().catch(() => {});
   ph.classList.add('hidden');
 }
