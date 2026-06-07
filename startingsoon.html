@@ -413,7 +413,7 @@
         <span class="clips-title">🎬 Pre-Stream Clips</span>
       </div>
       <div class="clips-body">
-        <video id="videoEl" autoplay playsinline muted></video>
+        <video id="videoEl" autoplay playsinline></video>
         <div class="clips-ph" id="clipsPh">
           <span class="clips-ph-icon">🎬</span>
           <span class="clips-ph-text">Pre-Stream Clips</span>
@@ -495,10 +495,27 @@ async function detectAndPlay() {
   }
 }
 
+// Start muted so autoplay works immediately on page load.
+// Audio unlocks the first time the user clicks anywhere — this satisfies
+// the browser's autoplay policy and lets OBS capture audio normally.
+let audioUnlocked = false;
+vid.muted = true;
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  vid.muted = false;
+  vid.volume = 1.0;
+  if (vid.paused && availableClips.length) vid.play().catch(() => {});
+  document.removeEventListener('click', unlockAudio);
+}
+document.addEventListener('click', unlockAudio);
+
 function playRandom() {
   if (!availableClips.length) return;
   const src = availableClips[Math.floor(Math.random() * availableClips.length)];
   vid.src = src;
+  vid.muted = !audioUnlocked; // stay muted until user click unlocks audio
   vid.play().catch(() => {});
   ph.classList.add('hidden');
 }
