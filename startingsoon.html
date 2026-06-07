@@ -263,6 +263,8 @@
     }
     .clips-body { flex:1; min-height:0; position:relative; }
     .clips-body video { width:100%; height:100%; object-fit:cover; display:block; }
+    /* Portrait video: show full clip with black bars instead of cropping */
+    .clips-body video.portrait-mode { width:auto; height:100%; object-fit:contain; background:#000; display:block; margin:0 auto; }
     .clips-ph {
       position:absolute; inset:0;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.5vh;
@@ -818,7 +820,13 @@ function playRandom(){
   if(!availableClips.length)return;
   const src=availableClips[Math.floor(Math.random()*availableClips.length)];
   vid.src=src; vid.muted=!audioUnlocked;
-  vid.play().catch(()=>{}); ph.classList.add('hidden');
+  vid.classList.remove('portrait-mode'); // reset before new video
+  vid.play().catch(()=>{});
+  ph.classList.add('hidden');
+  vid.onloadedmetadata=function(){
+    if(vid.videoHeight>vid.videoWidth){ vid.classList.add('portrait-mode'); }
+    else { vid.classList.remove('portrait-mode'); }
+  };
 }
 vid.addEventListener('ended',playRandom);
 vid.addEventListener('error',playRandom);
