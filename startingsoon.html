@@ -816,9 +816,31 @@ const unlockInterval=setInterval(()=>{
   tryAutoUnlock(); unlockAttempts++;
 },1000);
 document.addEventListener('click',unlockAudio);
+// ── SMART SHUFFLE QUEUE ──
+// Builds a shuffled copy of all available clips so every clip plays before any repeats.
+// Tracks lastSrc to prevent the same clip starting two rounds in a row.
+let clipQueue=[];
+let lastSrc='';
+function buildQueue(){
+  // Fisher-Yates shuffle of a fresh copy
+  const pool=availableClips.slice();
+  for(let i=pool.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [pool[i],pool[j]]=[pool[j],pool[i]];
+  }
+  // If the first clip in the new queue matches the last played clip, swap it with
+  // the second item so we never get a back-to-back repeat across queue boundaries.
+  if(pool.length>1 && pool[0]===lastSrc){
+    [pool[0],pool[1]]=[pool[1],pool[0]];
+  }
+  return pool;
+}
 function playRandom(){
   if(!availableClips.length)return;
-  const src=availableClips[Math.floor(Math.random()*availableClips.length)];
+  // Refill queue when empty
+  if(!clipQueue.length) clipQueue=buildQueue();
+  const src=clipQueue.shift();
+  lastSrc=src;
   vid.src=src; vid.muted=!audioUnlocked;
   vid.classList.remove('portrait-mode'); // reset before new video
   vid.play().catch(()=>{});
