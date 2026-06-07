@@ -338,17 +338,150 @@
       .cmd-desc { font-size:1.15vw; }
     }
 
-  </style>
+  
+    /* ── TITLE SHIMMER ── */
+    .title-inner { position:relative; display:inline-block; }
+    .hero-title-shimmer {
+      position:absolute; inset:0; pointer-events:none;
+      background:linear-gradient(105deg,transparent 30%,rgba(255,220,100,0.55) 45%,rgba(255,255,200,0.75) 50%,rgba(255,220,100,0.55) 55%,transparent 70%);
+      background-size:300% 100%;
+      animation:shimmerslide 4s ease-in-out infinite;
+      mix-blend-mode:screen;
+    }
+    @keyframes shimmerslide { 0%{background-position:200% 0} 100%{background-position:-100% 0} }
+
+    /* ── GLITCH ── */
+    .hero-title { position:relative; }
+    .hero-title.glitching::before,
+    .hero-title.glitching::after {
+      content:attr(data-text); position:absolute; inset:0;
+      text-align:center; font-size:inherit; font-weight:inherit; line-height:inherit; pointer-events:none;
+    }
+    .hero-title.glitching::before { color:#ff0044; animation:glitch-r 0.14s steps(1) infinite; }
+    .hero-title.glitching::after  { color:#00ffff; animation:glitch-b 0.14s steps(1) infinite; }
+    @keyframes glitch-r {
+      0%  {transform:translateX(-4px) skewX(-3deg);clip-path:polygon(0 20%,100% 20%,100% 40%,0 40%)}
+      25% {transform:translateX(4px)  skewX(1deg); clip-path:polygon(0 60%,100% 60%,100% 75%,0 75%)}
+      50% {transform:translateX(-6px) skewX(-4deg);clip-path:polygon(0 5%, 100% 5%, 100% 20%,0 20%)}
+      75% {transform:translateX(3px)  skewX(2deg); clip-path:polygon(0 80%,100% 80%,100% 95%,0 95%)}
+    }
+    @keyframes glitch-b {
+      0%  {transform:translateX(4px)  skewX(3deg); clip-path:polygon(0 55%,100% 55%,100% 75%,0 75%)}
+      25% {transform:translateX(-4px) skewX(-2deg);clip-path:polygon(0 30%,100% 30%,100% 50%,0 50%)}
+      50% {transform:translateX(6px)  skewX(4deg); clip-path:polygon(0 70%,100% 70%,100% 85%,0 85%)}
+      75% {transform:translateX(-3px) skewX(-3deg);clip-path:polygon(0 10%,100% 10%,100% 25%,0 25%)}
+    }
+
+    /* ── CORNER BEAMS ── */
+    .corner-beams { position:fixed; inset:0; z-index:10; pointer-events:none; }
+    .corner-beams canvas { position:absolute; inset:0; width:100%; height:100%; }
+
+    /* ── SCREEN FLASH ── */
+    #screenFlash { position:fixed; inset:0; z-index:50; pointer-events:none; opacity:0; background:#110005; transition:opacity 0.06s; }
+
+    /* ── TIMER THROB ── */
+    .timer-row { position:relative; overflow:visible; }
+    .timer-row.throb { animation:timerThrob 0.4s ease-in-out infinite; }
+    @keyframes timerThrob {
+      0%,100%{transform:scale(1);    box-shadow:0 0 30px rgba(160,0,30,0.4),0 0 60px rgba(60,0,10,0.3),inset 0 1px 0 rgba(255,255,255,0.06);}
+      50%    {transform:scale(1.04); box-shadow:0 0 70px rgba(180,0,40,0.85),0 0 140px rgba(80,0,20,0.5),inset 0 1px 0 rgba(255,255,255,0.06);}
+    }
+    #hakiCanvas { position:absolute; inset:-30px; width:calc(100% + 60px); height:calc(100% + 60px); pointer-events:none; z-index:3; }
+
+    /* ── CONFETTI ── */
+    #confettiCanvas { position:fixed; inset:0; z-index:60; pointer-events:none; display:none; }
+
+    /* ── CMD CHIP AURA ── */
+    .cmd-chip {
+      position: relative;
+    }
+    .cmd-chip::before {
+      content:'';
+      position:absolute;
+      inset:-4px;
+      border-radius:inherit;
+      opacity:0;
+      filter:blur(8px);
+      animation: chipAuraPulse 2s ease-in-out infinite;
+      z-index:-1;
+    }
+    .cmd-chip.purple::before { background:rgba(140,80,255,0.7); }
+    .cmd-chip.gold::before   { background:rgba(245,200,66,0.7);  }
+    .cmd-chip.blue::before   { background:rgba(80,160,255,0.7);  }
+    .cmd-chip.red::before    { background:rgba(255,60,80,0.7);   }
+    .cmd-chip.green::before  { background:rgba(46,204,113,0.7);  }
+    @keyframes chipAuraPulse {
+      0%,100% { opacity:0.0; transform:scale(1); }
+      50%     { opacity:0.9; transform:scale(1.15); }
+    }
+    /* stagger each chip so they don't all pulse at the same time */
+    .cmdbar-slide:nth-child(1) .cmd-chip::before { animation-delay:0s; }
+    .cmdbar-slide:nth-child(2) .cmd-chip::before { animation-delay:0.4s; }
+    .cmdbar-slide:nth-child(3) .cmd-chip::before { animation-delay:0.8s; }
+    .cmdbar-slide:nth-child(4) .cmd-chip::before { animation-delay:1.2s; }
+    .cmdbar-slide:nth-child(5) .cmd-chip::before { animation-delay:1.6s; }
+
+    /* ── CMD CHIP INNER SHIMMER ── */
+    .cmd-chip::after {
+      content:'';
+      position:absolute;
+      inset:0;
+      border-radius:inherit;
+      background:linear-gradient(105deg,transparent 25%,rgba(255,255,255,0.18) 45%,rgba(255,255,255,0.28) 50%,rgba(255,255,255,0.18) 55%,transparent 75%);
+      background-size:300% 100%;
+      animation:chipShimmer 3s ease-in-out infinite;
+      pointer-events:none;
+    }
+    .cmdbar-slide:nth-child(1) .cmd-chip::after { animation-delay:0s; }
+    .cmdbar-slide:nth-child(2) .cmd-chip::after { animation-delay:0.6s; }
+    .cmdbar-slide:nth-child(3) .cmd-chip::after { animation-delay:1.2s; }
+    .cmdbar-slide:nth-child(4) .cmd-chip::after { animation-delay:1.8s; }
+    .cmdbar-slide:nth-child(5) .cmd-chip::after { animation-delay:2.4s; }
+    @keyframes chipShimmer {
+      0%   { background-position:200% 0; }
+      100% { background-position:-100% 0; }
+    }
+
+    /* ── GREEN CHIP ── */
+    .cmd-chip.green {
+      background:rgba(46,204,113,0.13); border-color:rgba(46,204,113,0.55);
+      color:#2ecc71; text-shadow:0 0 22px rgba(46,204,113,0.7);
+      box-shadow:0 0 24px rgba(46,204,113,0.15),inset 0 1px 0 rgba(255,255,255,0.07);
+    }
+
+    /* ── SCANLINE OVERLAY ── */
+    .scanlines {
+      position:fixed; inset:0; z-index:1; pointer-events:none;
+      background:repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.06) 2px,
+        rgba(0,0,0,0.06) 4px
+      );
+    }
+
+    /* ── VIGNETTE ── */
+    .vignette {
+      position:fixed; inset:0; z-index:1; pointer-events:none;
+      background:radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.65) 100%);
+    }
+</style>
 </head>
 <body>
 
+<div class="corner-beams"><canvas id="beamCanvas"></canvas></div>
+<div id="screenFlash"></div>
+<canvas id="confettiCanvas"></canvas>
+<div class="scanlines"></div>
+<div class="vignette"></div>
 <div class="particles" id="particles"></div>
 
 <div class="grid">
 
   <div class="hero">
     <div class="live"><span class="live-dot"></span>LIVE</div>
-    <div class="hero-title">Starting Soon</div>
+    <div class="hero-title" id="heroTitle" data-text="Starting Soon"><span class="title-inner">Starting Soon<div class="hero-title-shimmer"></div></span></div>
     <div class="timer-row">
       <span class="timer-label">Starting In</span>
       <span class="timer-num" id="timerNum">3:00</span>
@@ -404,6 +537,15 @@
         </div>
       </div>
 
+
+      <div class="cmdbar-slide">
+        <div class="cmd-chip-wrap"><div class="cmd-chip green">!top</div></div>
+        <div class="cmd-info">
+          <span class="cmd-action">Top Spenders 🤑</span>
+          <span class="cmd-desc">See who the big spenders are — the <b class="goldword">Dabloob</b> ballers of the stream!</span>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -441,6 +583,7 @@
 </div>
 
 <script>
+// ── PARTICLES ──
 !function(){
   const c=document.getElementById('particles'),cols=['#a070ff','#f5c842','#7744dd','#5533bb'];
   for(let i=0;i<55;i++){
@@ -453,98 +596,235 @@
   }
 }();
 
+// ── GLITCH TEXT ──
+const heroTitle=document.getElementById('heroTitle');
+function triggerGlitch(){
+  heroTitle.classList.add('glitching');
+  setTimeout(()=>heroTitle.classList.remove('glitching'),200+Math.random()*300);
+}
+function schedGlitch(){ setTimeout(()=>{triggerGlitch();schedGlitch();},4000+Math.random()*6000); }
+schedGlitch();
+
+// ── SHARED LIGHTNING DRAW ──
+function drawLightningBolt(ctx,x1,y1,x2,y2,rough,width){
+  const segs=8,dx=(x2-x1)/segs,dy=(y2-y1)/segs;
+  let cx=x1,cy=y1;
+  const pts=[[x1,y1]];
+  for(let i=1;i<segs;i++){
+    cx+=dx+(Math.random()-0.5)*rough;
+    cy+=dy+(Math.random()-0.5)*rough;
+    pts.push([cx,cy]);
+  }
+  pts.push([x2,y2]);
+  ctx.save();
+  ctx.strokeStyle='#cc0020'; ctx.lineWidth=width*3.5;
+  ctx.shadowBlur=28; ctx.shadowColor='#cc0020'; ctx.globalAlpha=0.4;
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+  pts.forEach(p=>ctx.lineTo(p[0],p[1])); ctx.stroke();
+  ctx.strokeStyle='#080005'; ctx.lineWidth=width;
+  ctx.shadowBlur=6; ctx.shadowColor='#aa0018'; ctx.globalAlpha=1;
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+  pts.forEach(p=>ctx.lineTo(p[0],p[1])); ctx.stroke();
+  ctx.restore();
+  return pts;
+}
+
+// ── CORNER LIGHTNING ──
+(function(){
+  const canvas=document.getElementById('beamCanvas');
+  const ctx=canvas.getContext('2d');
+  function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+  resize(); window.addEventListener('resize',resize);
+  function getCorners(){
+    const w=canvas.width,h=canvas.height;
+    return [
+      {x:0,y:0,   tx:160,ty:0,  bx:0,  by:160},
+      {x:w,y:0,   tx:w-160,ty:0,bx:w,  by:160},
+      {x:0,y:h,   tx:160,ty:h,  bx:0,  by:h-160},
+      {x:w,y:h,   tx:w-160,ty:h,bx:w,  by:h-160}
+    ];
+  }
+  const flashEl=document.getElementById('screenFlash');
+  let lastBolt=0;
+  function drawFrame(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const now=Date.now();
+    if(now-lastBolt>2000 && Math.random()<0.06){
+      lastBolt=now;
+      const corners=getCorners();
+      const count=Math.random()<0.25?2:1;
+      const shuffled=corners.slice().sort(()=>Math.random()-0.5).slice(0,count);
+      shuffled.forEach(c=>{
+        const pts1=drawLightningBolt(ctx,c.x,c.y,c.tx+(Math.random()-0.5)*50,c.ty+(Math.random()-0.5)*50,35,4+Math.random()*4);
+        drawLightningBolt(ctx,c.x,c.y,c.bx+(Math.random()-0.5)*50,c.by+(Math.random()-0.5)*50,35,4+Math.random()*4);
+        if(Math.random()<0.5){
+          const mid=pts1[Math.floor(pts1.length/2)];
+          drawLightningBolt(ctx,mid[0],mid[1],mid[0]+(Math.random()-0.5)*180,mid[1]+(Math.random()-0.5)*180,28,2+Math.random()*2);
+        }
+      });
+      if(Math.random()<0.1){ flashEl.style.opacity='0.12'; setTimeout(()=>{flashEl.style.opacity='0';},90); }
+    }
+    requestAnimationFrame(drawFrame);
+  }
+  drawFrame();
+})();
+
+// ── TIMER ──
 const TOTAL=180; let left=TOTAL;
 const tEl=document.getElementById('timerNum');
 const fEl=document.getElementById('footerTimer');
 const bar=document.getElementById('progressFill');
+const timerRow=document.querySelector('.timer-row');
 const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+let hakiStarted=false;
+// FIXED: confetti guard so it only fires once
+let confettiFired=false;
+
 setInterval(()=>{
-  if(left<=0){tEl.classList.add('urgent');return;}
+  if(left<=0){
+    if(!confettiFired){ confettiFired=true; triggerConfetti(); }
+    tEl.classList.add('urgent');
+    return;
+  }
   left--;
   const t=fmt(left); tEl.textContent=fEl.textContent=t;
   bar.style.width=((left/TOTAL)*100)+'%';
-  if(left<=30)tEl.classList.add('urgent');
+  if(left<=30){
+    tEl.classList.add('urgent');
+    timerRow.classList.add('throb');
+    if(!hakiStarted){ hakiStarted=true; startTimerHaki(); }
+  }
 },1000);
 
-// Auto-detect which clips exist out of clip1.mp4 -> clip100.mp4
-const vid = document.getElementById('videoEl');
-const ph  = document.getElementById('clipsPh');
-let availableClips = [];
-let checking = 0;
-const TOTAL_SLOTS = 100;
+// ── HAKI LIGHTNING around timer ──
+function startTimerHaki(){
+  const hc=document.createElement('canvas');
+  hc.id='hakiCanvas';
+  timerRow.appendChild(hc);
+  function resizeHaki(){ hc.width=timerRow.offsetWidth+60; hc.height=timerRow.offsetHeight+60; }
+  resizeHaki();
+  const ctx=hc.getContext('2d');
+  let lastHakiBolt=0;
+  function hakiFrame(){
+    if(!hakiStarted)return;
+    resizeHaki();
+    ctx.clearRect(0,0,hc.width,hc.height);
+    const now=Date.now();
+    const w=hc.width,h=hc.height;
+    if(now-lastHakiBolt>300 && Math.random()<0.55){
+      lastHakiBolt=now;
+      const edge=Math.floor(Math.random()*4);
+      let x1,y1;
+      if(edge===0){x1=Math.random()*w;y1=5;}
+      else if(edge===1){x1=w-5;y1=Math.random()*h;}
+      else if(edge===2){x1=Math.random()*w;y1=h-5;}
+      else{x1=5;y1=Math.random()*h;}
+      const outDist=20+Math.random()*35;
+      const angle=Math.random()*Math.PI*2;
+      drawLightningBolt(ctx,x1,y1,x1+Math.cos(angle)*outDist,y1+Math.sin(angle)*outDist,12,1.5+Math.random()*2);
+      if(Math.random()<0.4){
+        drawLightningBolt(ctx,x1,y1,x1+(Math.random()-0.5)*60,y1+(Math.random()-0.5)*60,8,1+Math.random()*1.5);
+      }
+    }
+    requestAnimationFrame(hakiFrame);
+  }
+  hakiFrame();
+}
 
-function checkClip(n) {
-  return new Promise(resolve => {
-    const t = document.createElement('video');
-    const src = `videos/clip${n}.mp4`;
-    t.onloadedmetadata = () => { availableClips.push(src); resolve(); };
-    t.onerror = () => resolve();
-    t.preload = 'metadata';
-    t.src = src;
-    // timeout in case it hangs
-    setTimeout(resolve, 3000);
+// ── CONFETTI (one-shot, hard 5s stop) ──
+function triggerConfetti(){
+  const ec=document.getElementById('confettiCanvas');
+  ec.style.display='block';
+  ec.width=window.innerWidth; ec.height=window.innerHeight;
+  const ctx=ec.getContext('2d');
+  const cols=['#f5c842','#a070ff','#ff4455','#00ffcc','#ff79c6','#ffffff','#ff8800','#44aaff'];
+  const pieces=[];
+  for(let i=0;i<160;i++){
+    const a=Math.random()*Math.PI*2,sp=6+Math.random()*16;
+    pieces.push({
+      x:ec.width*0.3+Math.random()*ec.width*0.4,
+      y:ec.height*0.4+Math.random()*ec.height*0.2,
+      vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-(2+Math.random()*5),
+      w:6+Math.random()*10,h:4+Math.random()*6,
+      rot:Math.random()*Math.PI*2,rotV:(Math.random()-0.5)*0.25,
+      color:cols[~~(Math.random()*cols.length)],
+      life:1,decay:0.004+Math.random()*0.005
+    });
+  }
+  const endTime=Date.now()+5000;
+  function animConfetti(){
+    ctx.clearRect(0,0,ec.width,ec.height);
+    if(Date.now()>=endTime){ ec.style.display='none'; return; }
+    pieces.forEach(p=>{
+      if(p.life<=0)return;
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.vx*=0.99;
+      p.rot+=p.rotV; p.life-=p.decay;
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,p.life);
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot);
+      ctx.fillStyle=p.color; ctx.shadowBlur=8; ctx.shadowColor=p.color;
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx.restore();
+    });
+    requestAnimationFrame(animConfetti);
+  }
+  animConfetti();
+}
+
+// ── CLIPS / AUDIO ──
+const vid=document.getElementById('videoEl');
+const ph=document.getElementById('clipsPh');
+let availableClips=[];
+const TOTAL_SLOTS=100;
+function checkClip(n){
+  return new Promise(resolve=>{
+    const t=document.createElement('video');
+    const src=`videos/clip${n}.mp4`;
+    t.onloadedmetadata=()=>{availableClips.push(src);resolve();};
+    t.onerror=()=>resolve(); t.preload='metadata'; t.src=src;
+    setTimeout(resolve,3000);
   });
 }
-
-async function detectAndPlay() {
-  const checks = [];
-  for (let i = 1; i <= TOTAL_SLOTS; i++) checks.push(checkClip(i));
+async function detectAndPlay(){
+  const checks=[];
+  for(let i=1;i<=TOTAL_SLOTS;i++)checks.push(checkClip(i));
   await Promise.all(checks);
-  if (availableClips.length > 0) {
-    playRandom();
-  }
+  if(availableClips.length>0)playRandom();
 }
-
-// OBS CEF blocks autoplay with audio. We use a silent AudioContext trick
-// to auto-unlock audio without needing a click. Retries every second for
-// up to 10 seconds to account for OBS load time.
-let audioUnlocked = false;
-vid.muted = true;
-
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  vid.muted = false;
-  vid.volume = 1.0;
-  if (vid.paused && availableClips.length) vid.play().catch(() => {});
+let audioUnlocked=false;
+vid.muted=true;
+function unlockAudio(){
+  if(audioUnlocked)return; audioUnlocked=true;
+  vid.muted=false; vid.volume=1.0;
+  if(vid.paused&&availableClips.length)vid.play().catch(()=>{});
 }
-
-function tryAutoUnlock() {
-  try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src2 = ctx.createBufferSource();
-    src2.buffer = buf;
-    src2.connect(ctx.destination);
-    src2.start(0);
-    ctx.resume().then(() => { unlockAudio(); }).catch(() => {});
-  } catch(e) {}
+function tryAutoUnlock(){
+  try{
+    const actx=new(window.AudioContext||window.webkitAudioContext)();
+    const buf=actx.createBuffer(1,1,22050);
+    const s2=actx.createBufferSource(); s2.buffer=buf;
+    s2.connect(actx.destination); s2.start(0);
+    actx.resume().then(()=>{unlockAudio();}).catch(()=>{});
+  }catch(e){}
 }
-
-let unlockAttempts = 0;
-const unlockInterval = setInterval(() => {
-  if (audioUnlocked) { clearInterval(unlockInterval); return; }
-  if (unlockAttempts >= 10) { clearInterval(unlockInterval); return; }
-  tryAutoUnlock();
-  unlockAttempts++;
-}, 1000);
-
-document.addEventListener('click', unlockAudio);
-
-function playRandom() {
-  if (!availableClips.length) return;
-  const src = availableClips[Math.floor(Math.random() * availableClips.length)];
-  vid.src = src;
-  vid.muted = !audioUnlocked;
-  vid.play().catch(() => {});
-  ph.classList.add('hidden');
+let unlockAttempts=0;
+const unlockInterval=setInterval(()=>{
+  if(audioUnlocked){clearInterval(unlockInterval);return;}
+  if(unlockAttempts>=10){clearInterval(unlockInterval);return;}
+  tryAutoUnlock(); unlockAttempts++;
+},1000);
+document.addEventListener('click',unlockAudio);
+function playRandom(){
+  if(!availableClips.length)return;
+  const src=availableClips[Math.floor(Math.random()*availableClips.length)];
+  vid.src=src; vid.muted=!audioUnlocked;
+  vid.play().catch(()=>{}); ph.classList.add('hidden');
 }
-
-vid.addEventListener('ended', playRandom);
-vid.addEventListener('error', playRandom);
-
+vid.addEventListener('ended',playRandom);
+vid.addEventListener('error',playRandom);
 detectAndPlay();
 
+// ── COMMAND SLIDES ──
 const slideEls=document.querySelectorAll('.cmdbar-slide');
 const dotsEl=document.getElementById('dots');
 let cur=0;
