@@ -664,7 +664,7 @@ startTimer();
 // ──────────────────────────────────────────────────────
 let entries = [];
 let phase   = 'waiting';
-const NUM_WINNERS = 1;
+const NUM_WINNERS = 2;
 
 // ══════════════════════════════════════════════════════
 // SUPABASE CONFIG
@@ -805,35 +805,10 @@ async function handleUrlCommand() {
   }
 
   // ── cmd=draw — you ran !draw
-  //    Before animating, reload the full live entry list from
-  //    Supabase for this round so the drum includes everyone
-  //    who entered with is_active = true.
+  //    Streamer.bot already picked the winner and sends
+  //    it in the URL so the animation knows who won
   if (cmd === "draw") {
     stopPolling();
-
-    if (roundId) {
-      activeRoundId = roundId;
-      try {
-        const liveEntries = await sbRequest(
-          "GET",
-          `${SB_TABLE}?round_id=eq.${roundId}&is_active=eq.true&select=username,created_at&order=created_at.asc`
-        );
-
-        if (Array.isArray(liveEntries)) {
-          entries = [];
-          liveEntries.forEach(r => {
-            if (!r || !r.username) return;
-            if (!entries.find(e => e.toLowerCase() === r.username.toLowerCase())) {
-              entries.push(r.username);
-            }
-          });
-
-          const el = document.getElementById("entry-count");
-          if (el) el.textContent = entries.length;
-        }
-      } catch(_) {}
-    }
-
     if (winner) {
       // Inject the decided winner into the pool so the drum
       // animation always lands on the correct name
