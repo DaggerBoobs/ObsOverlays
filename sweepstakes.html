@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sweepstakes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold:      #f5c842;
+  --dark:      #0a0a0c;
+  --surface:   #13121a;
+  --surface2:  #1a1825;
+  --border:    rgba(255,255,255,0.07);
+  --text:      #f0eff5;
+  --muted:     #7a7890;
+  --green:     #22c55e;
+  --orange:    #f97316;
+  --red:       #ef4444;
+  --font-d:    'Bebas Neue', sans-serif;
+  --font-b:    'Inter', sans-serif;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--dark);
+  color: var(--text);
+  font-family: var(--font-b);
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════
+   WAITING SCREEN
+═══════════════════════════════ */
+#waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding-top: 90px;
+  gap: 12px;
+}
+
+#waiting h1 {
+  font-family: var(--font-d);
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  text-shadow: 0 0 50px rgba(245,200,66,0.4);
+}
+
+/* TIMER */
+#timer-wrap {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 0 14px;
+  background: linear-gradient(to bottom, rgba(10,10,12,0.97), transparent);
+  z-index: 400;
+  gap: 2px;
+  pointer-events: none;
+}
+#timer {
+  font-family: var(--font-d);
+  font-size: clamp(2.4rem, 4.5vw, 4rem);
+  letter-spacing: 0.04em;
+  color: var(--green);
+  transition: color 1s ease;
+  line-height: 1;
+}
+#timer.flash { animation: timerFlash 0.6s ease infinite; }
+@keyframes timerFlash {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.15; }
+}
+#timer-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ENTRY COUNT */
+#entry-count {
+  font-family: var(--font-d);
+  font-size: clamp(3rem, 7vw, 6rem);
+  color: var(--text);
+  line-height: 1;
+  transition: transform 0.15s ease;
+}
+#entry-label {
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+#enter-hint {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-top: 4px;
+}
+#enter-hint strong { color: var(--gold); }
+
+/* ═══════════════════════════════
+   PORTAL TRANSITION
+═══════════════════════════════ */
+#curtain-wrap {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background: var(--dark);
+}
+
+/* The portal canvas sits inside curtain-wrap */
+#portal-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+}
+
+/* Shockwave ring */
+#shockwave {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 0; height: 0;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+#shockwave.burst {
+  animation: shockwaveBurst 1.2s cubic-bezier(0,0.5,0.5,1) forwards;
+}
+@keyframes shockwaveBurst {
+  0%   { width: 0;    height: 0;    opacity: 0.9; }
+  100% { width: 250vw; height: 250vw; opacity: 0; }
+}
+
+/* Flash white */
+#flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  opacity: 0;
+  z-index: 60;
+  pointer-events: none;
+  transition: opacity 0.08s ease;
+}
+#flash.pop { opacity: 0.85; }
+
+#spotlight {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 50% 40%, rgba(245,200,66,0.08) 0%, transparent 70%);
+  z-index: 48;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+#spotlight.show { opacity: 1; }
+
+/* ═══════════════════════════════
+   STAGE
+═══════════════════════════════ */
+#stage {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 24px;
+  position: relative;
+  z-index: 10;
+}
+
+#stage-title {
+  font-family: var(--font-d);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  text-shadow: 0 0 40px rgba(245,200,66,0.5);
+  margin-bottom: 28px;
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+#stage-title.show { opacity: 1; transform: translateY(0); }
+
+/* ── DRUM ── */
+#drum-wrap {
+  position: relative;
+  width: min(520px, 88vw);
+  height: 240px;
+  background: var(--surface);
+  border: 1px solid rgba(245,200,66,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 32px;
+  box-shadow: 0 0 60px rgba(245,200,66,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+#drum-wrap::before, #drum-wrap::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+#drum-wrap::before { top: 0;    background: linear-gradient(to bottom, var(--surface), transparent); }
+#drum-wrap::after  { bottom: 0; background: linear-gradient(to top,   var(--surface), transparent); }
+
+.drum-strip {
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 72px;
+  border-top: 2px solid var(--gold);
+  border-bottom: 2px solid var(--gold);
+  background: rgba(245,200,66,0.04);
+  z-index: 3;
+  pointer-events: none;
+}
+/* Gold glow lines */
+.drum-strip::before, .drum-strip::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: var(--gold);
+  box-shadow: 0 0 12px 2px rgba(245,200,66,0.6);
+}
+.drum-strip::before { top: 0; }
+.drum-strip::after  { bottom: 0; }
+
+#drum-reel {
+  position: absolute;
+  left: 0; right: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  will-change: transform;
+}
+.drum-name {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-d);
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  letter-spacing: 0.05em;
+  color: var(--text);
+  width: 100%;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* SLOWDOWN PHASE — the last few names */
+#slowdown-name {
+  display: none;
+  font-family: var(--font-d);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  letter-spacing: 0.06em;
+  color: var(--text);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+}
+
+/* ── WINNER CARDS ── */
+#winners-area {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.winner-card {
+  background: var(--surface2);
+  border: 1px solid rgba(245,200,66,0.25);
+  border-radius: 16px;
+  padding: 28px 44px;
+  text-align: center;
+  min-width: 220px;
+  opacity: 0;
+  transform: scale(0.8) translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1),
+              transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 0 60px rgba(245,200,66,0.12);
+  position: relative;
+  overflow: hidden;
+}
+.winner-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,200,66,0.08), transparent);
+  pointer-events: none;
+}
+.winner-card.reveal {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+.winner-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+.winner-name {
+  font-family: var(--font-d);
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+/* STATUS */
+#status-text {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 18px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-height: 1.2em;
+}
+
+/* tension bar removed */
+
+/* ── NO ENTRIES ── */
+#no-entries {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 12px;
+  color: var(--muted);
+}
+#no-entries h2 {
+  font-family: var(--font-d);
+  font-size: 2.5rem;
+  color: var(--text);
+  letter-spacing: 0.05em;
+}
+
+/* ── CONFETTI ── */
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* ── RESET ── */
+#reset-btn {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  background: var(--surface2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: var(--font-b);
+  font-size: 0.78rem;
+  cursor: pointer;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  transition: color 0.2s, border-color 0.2s;
+  z-index: 300;
+}
+#reset-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+<div id="spotlight"></div>
+
+<!-- FIXED TIMER — always on top -->
+<div id="timer-wrap">
+  <div id="timer">30:00</div>
+  <div id="timer-label">time remaining</div>
+</div>
+
+<!-- PORTAL TRANSITION -->
+<div id="curtain-wrap">
+  <canvas id="portal-canvas"></canvas>
+  <div id="shockwave"></div>
+</div>
+<div id="flash"></div>
+
+<!-- WAITING -->
+<div id="waiting">
+  <h1>🎟️ SWEEPSTAKES</h1>
+  <div id="entry-count">0</div>
+  <div id="entry-label">entries</div>
+  <p id="enter-hint">Type <strong>!enter</strong> to join</p>
+</div>
+
+<!-- NO ENTRIES -->
+<div id="no-entries">
+  <h2>No Entries</h2>
+  <p>Nobody entered — better luck next time!</p>
+</div>
+
+<!-- STAGE -->
+<div id="stage">
+  <div id="stage-title">🎟️ DRAWING WINNERS</div>
+  <div id="drum-wrap">
+    <div class="drum-strip"></div>
+    <div id="drum-reel"></div>
+    <div id="slowdown-name"></div>
+  </div>
+  <div id="winners-area"></div>
+  <div id="status-text"></div>
+</div>
+
+<button id="reset-btn" onclick="resetAll()">↺ Reset</button>
+
+<script>
+// ──────────────────────────────────────────────────────
+// AUDIO — Ding using Web Audio API (no file needed)
+// ──────────────────────────────────────────────────────
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playDing() {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1046, ctx.currentTime);       // C6
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.6);
+  } catch(e) {}
+}
+
+function playDrum(speed) {
+  // tick sound during shuffle — higher pitch = faster
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(300 + speed * 200, ctx.currentTime);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.08);
+  } catch(e) {}
+}
+
+function playReveal() {
+  try {
+    const ctx = getAudio();
+    const notes = [261.63, 329.63, 392, 523.25];
+    notes.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+      gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + i * 0.08 + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 1.2);
+      osc.start(ctx.currentTime + i * 0.08);
+      osc.stop(ctx.currentTime + i * 0.08 + 1.2);
+    });
+  } catch(e) {}
+}
+
+// ── SUPERNOVA SOUNDS ──
+function playPortalCharge() {
+  // Rising electrical hum as vortex charges up
+  try {
+    const ctx  = getAudio();
+    const now  = ctx.currentTime;
+
+    // Low rumble
+    const rumble = ctx.createOscillator();
+    const rGain  = ctx.createGain();
+    rumble.connect(rGain); rGain.connect(ctx.destination);
+    rumble.type = 'sawtooth';
+    rumble.frequency.setValueAtTime(40, now);
+    rumble.frequency.linearRampToValueAtTime(80, now + 2.2);
+    rGain.gain.setValueAtTime(0, now);
+    rGain.gain.linearRampToValueAtTime(0.18, now + 0.3);
+    rGain.gain.linearRampToValueAtTime(0.28, now + 2.0);
+    rGain.gain.linearRampToValueAtTime(0, now + 2.5);
+    rumble.start(now); rumble.stop(now + 2.5);
+
+    // Rising whine
+    const whine  = ctx.createOscillator();
+    const wGain  = ctx.createGain();
+    const wFilter = ctx.createBiquadFilter();
+    whine.connect(wFilter); wFilter.connect(wGain); wGain.connect(ctx.destination);
+    whine.type = 'sawtooth';
+    wFilter.type = 'bandpass';
+    wFilter.frequency.setValueAtTime(200, now);
+    whine.frequency.setValueAtTime(80, now);
+    whine.frequency.exponentialRampToValueAtTime(900, now + 2.4);
+    wFilter.frequency.linearRampToValueAtTime(1200, now + 2.4);
+    wGain.gain.setValueAtTime(0, now);
+    wGain.gain.linearRampToValueAtTime(0.12, now + 0.5);
+    wGain.gain.linearRampToValueAtTime(0.22, now + 2.2);
+    wGain.gain.linearRampToValueAtTime(0, now + 2.5);
+    whine.start(now); whine.stop(now + 2.5);
+
+    // Crackling sparks — short random noise bursts
+    for (let i = 0; i < 8; i++) {
+      const delay = 0.3 + Math.random() * 1.8;
+      const buf   = ctx.createBuffer(1, ctx.sampleRate * 0.08, ctx.sampleRate);
+      const data  = buf.getChannelData(0);
+      for (let j = 0; j < data.length; j++) data[j] = (Math.random() * 2 - 1) * 0.6;
+      const src  = ctx.createBufferSource();
+      const sGain = ctx.createGain();
+      const sFilt = ctx.createBiquadFilter();
+      src.buffer = buf;
+      src.connect(sFilt); sFilt.connect(sGain); sGain.connect(ctx.destination);
+      sFilt.type = 'highpass'; sFilt.frequency.value = 800;
+      sGain.gain.setValueAtTime(0.08 + Math.random() * 0.1, now + delay);
+      sGain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.08);
+      src.start(now + delay); src.stop(now + delay + 0.08);
+    }
+  } catch(e) {}
+}
+
+function playExplosionBoom() {
+  // Massive BOOM + high frequency crack
+  try {
+    const ctx = getAudio();
+    const now = ctx.currentTime;
+
+    // Sub-bass BOOM
+    const boom  = ctx.createOscillator();
+    const bGain = ctx.createGain();
+    boom.connect(bGain); bGain.connect(ctx.destination);
+    boom.type = 'sine';
+    boom.frequency.setValueAtTime(120, now);
+    boom.frequency.exponentialRampToValueAtTime(25, now + 0.6);
+    bGain.gain.setValueAtTime(0.9, now);
+    bGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    boom.start(now); boom.stop(now + 0.8);
+
+    // Mid punch
+    const mid  = ctx.createOscillator();
+    const mGain = ctx.createGain();
+    mid.connect(mGain); mGain.connect(ctx.destination);
+    mid.type = 'square';
+    mid.frequency.setValueAtTime(200, now);
+    mid.frequency.exponentialRampToValueAtTime(60, now + 0.4);
+    mGain.gain.setValueAtTime(0.35, now);
+    mGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+    mid.start(now); mid.stop(now + 0.5);
+
+    // White noise burst
+    const bufLen = ctx.sampleRate * 0.5;
+    const buf    = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data   = buf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) data[i] = (Math.random() * 2 - 1);
+    const noise  = ctx.createBufferSource();
+    const nGain  = ctx.createGain();
+    const nFilt  = ctx.createBiquadFilter();
+    noise.buffer = buf;
+    noise.connect(nFilt); nFilt.connect(nGain); nGain.connect(ctx.destination);
+    nFilt.type = 'bandpass'; nFilt.frequency.value = 1800; nFilt.Q.value = 0.5;
+    nGain.gain.setValueAtTime(0.4, now);
+    nGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    noise.start(now); noise.stop(now + 0.5);
+
+    // High shimmer tail
+    const shimmer = ctx.createOscillator();
+    const shGain  = ctx.createGain();
+    shimmer.connect(shGain); shGain.connect(ctx.destination);
+    shimmer.type = 'sine';
+    shimmer.frequency.setValueAtTime(2400, now + 0.05);
+    shimmer.frequency.exponentialRampToValueAtTime(400, now + 1.5);
+    shGain.gain.setValueAtTime(0.15, now + 0.05);
+    shGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    shimmer.start(now + 0.05); shimmer.stop(now + 1.5);
+
+  } catch(e) {}
+}
+
+// ──────────────────────────────────────────────────────
+// TIMER
+// ──────────────────────────────────────────────────────
+const TOTAL_SECONDS = 30 * 60; // 30 minutes
+let timerSeconds = TOTAL_SECONDS;
+let timerInterval = null;
+let timerRunning  = false;
+
+function startTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
+  timerInterval = setInterval(() => {
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      document.getElementById('timer').textContent = '0:00';
+      document.getElementById('timer').classList.add('flash');
+      return;
+    }
+    timerSeconds--;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const el  = document.getElementById('timer');
+  const m   = Math.floor(timerSeconds / 60);
+  const s   = timerSeconds % 60;
+  el.textContent = m + ':' + String(s).padStart(2,'0');
+
+  const pct = timerSeconds / TOTAL_SECONDS;
+  if (pct > 0.5) {
+    el.style.color = 'var(--green)';
+    el.style.textShadow = '0 0 30px rgba(34,197,94,0.4)';
+  } else if (pct > 0.2) {
+    el.style.color = 'var(--orange)';
+    el.style.textShadow = '0 0 30px rgba(249,115,22,0.4)';
+  } else {
+    el.style.color = 'var(--red)';
+    el.style.textShadow = '0 0 30px rgba(239,68,68,0.5)';
+  }
+}
+
+// Auto-start timer when page loads
+startTimer();
+
+// ──────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────
+let entries = [];
+let phase   = 'waiting';
+const NUM_WINNERS = 2;
+
+// ══════════════════════════════════════════════════════
+// SUPABASE CONFIG
+// ══════════════════════════════════════════════════════
+const SUPABASE_URL = "https://dwidrzvykkhrwfknirnw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_GaADxTu77sNKGDdgHxFgtQ_ZoXavNPX";
+const SB_TABLE     = "sweepstakes_entries";
+
+// ──────────────────────────────────────────────────────
+// SUPABASE HELPER — generic REST request
+// All communication to Supabase goes through this one
+// function. method = "GET" | "POST" | "PATCH" | "DELETE"
+// ──────────────────────────────────────────────────────
+async function sbRequest(method, path, body = null) {
+  const opts = {
+    method,
+    headers: {
+      "apikey":        SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type":  "application/json",
+      // return=minimal means Supabase sends no response body on
+      // INSERT/PATCH — keeps it lightweight
+      "Prefer": method !== "GET" ? "return=minimal" : ""
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, opts);
+  if (method === "GET") return res.json();
+  return res;
+}
+
+// ──────────────────────────────────────────────────────
+// ACTIVE ROUND — stored in URL param, set by Streamer.bot
+// when it navigates the OBS browser source to:
+//   sweepstakes.html?cmd=enter&user=USERNAME&round=ROUNDID
+// ──────────────────────────────────────────────────────
+function getParam(key) {
+  return new URLSearchParams(window.location.search).get(key) || "";
+}
+
+// ──────────────────────────────────────────────────────
+// POLLING — keeps the entry count live in OBS without
+// needing a WebSocket server. Runs every 4 seconds.
+// Only polls during the 'waiting' phase so it doesn't
+// interfere with the draw animation.
+// ──────────────────────────────────────────────────────
+let activeRoundId = "";
+let pollInterval  = null;
+
+function startPolling(roundId) {
+  activeRoundId = roundId;
+  stopPolling();
+  pollInterval = setInterval(async () => {
+    if (phase !== "waiting") return; // don't refresh during animation
+    try {
+      const data = await sbRequest(
+        "GET",
+        `${SB_TABLE}?round_id=eq.${roundId}&is_active=eq.true&select=username`
+      );
+      if (!Array.isArray(data)) return;
+      // Rebuild entries array from the live DB data
+      const fresh = data.map(r => r.username);
+      // Only update if something changed — avoids unnecessary redraws
+      if (fresh.length !== entries.length) {
+        // Add any new names (play ding for each new one)
+        fresh.forEach(name => {
+          if (!entries.find(e => e.toLowerCase() === name.toLowerCase())) {
+            entries.push(name);
+            try { getAudio().resume(); } catch(_) {}
+            playDing();
+          }
+        });
+        // Sync the count display
+        const el = document.getElementById("entry-count");
+        el.textContent = entries.length;
+        el.style.transform = "scale(1.25)";
+        setTimeout(() => { el.style.transform = "scale(1)"; el.style.transition = "transform 0.2s ease"; }, 150);
+      }
+    } catch(err) {
+      // Silent poll errors — OBS will just retry in 4s
+    }
+  }, 4000);
+}
+
+function stopPolling() {
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+}
+
+// ──────────────────────────────────────────────────────
+// COMMAND HANDLER — reads the ?cmd= URL param that
+// Streamer.bot injects when it sets the browser source URL
+// ──────────────────────────────────────────────────────
+async function handleUrlCommand() {
+  const cmd     = getParam("cmd");
+  const user    = getParam("user");
+  const roundId = getParam("round");
+  const winner  = getParam("winner");
+
+  // ── cmd=open — Streamer.bot ran !sweepopen
+  //    Opens entries for this round and starts live polling
+  if (cmd === "open" && roundId) {
+    activeRoundId = roundId;
+    // Load any entries already in DB for this round
+    // (handles the case where OBS reloaded mid-round)
+    try {
+      const existing = await sbRequest(
+        "GET",
+        `${SB_TABLE}?round_id=eq.${roundId}&is_active=eq.true&select=username`
+      );
+      if (Array.isArray(existing)) {
+        existing.forEach(r => {
+          if (!entries.find(e => e.toLowerCase() === r.username.toLowerCase()))
+            entries.push(r.username);
+        });
+        document.getElementById("entry-count").textContent = entries.length;
+      }
+    } catch(_) {}
+    startPolling(roundId);
+    return;
+  }
+
+  // ── cmd=enter — one chatter typed !enter
+  //    Streamer.bot already wrote them to Supabase;
+  //    we just do a local addEntry so the count updates
+  //    instantly on this browser source without waiting
+  //    for the next poll cycle
+  if (cmd === "enter" && user) {
+    if (!entries.find(e => e.toLowerCase() === user.toLowerCase())) {
+      entries.push(user);
+      try { getAudio().resume(); } catch(_) {}
+      playDing();
+      const el = document.getElementById("entry-count");
+      el.textContent = entries.length;
+      el.style.transform = "scale(1.25)";
+      setTimeout(() => { el.style.transform = "scale(1)"; el.style.transition = "transform 0.2s ease"; }, 150);
+    }
+    return;
+  }
+
+  // ── cmd=draw — you ran !draw
+  //    Streamer.bot already picked the winner and sends
+  //    it in the URL so the animation knows who won
+  if (cmd === "draw") {
+    stopPolling();
+    if (winner) {
+      // Inject the decided winner into the pool so the drum
+      // animation always lands on the correct name
+      if (!entries.find(e => e.toLowerCase() === winner.toLowerCase()))
+        entries.push(winner);
+      // Store so startRolling() can force this outcome
+      window._forcedWinner = winner;
+    }
+    startDraw();
+    return;
+  }
+
+  // ── cmd=reset — you ran !sweepreset
+  if (cmd === "reset") {
+    stopPolling();
+    activeRoundId = "";
+    resetAll();
+    return;
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// ENTRY
+// ──────────────────────────────────────────────────────
+function addEntry(name) {
+  if (phase !== 'waiting') return;
+  if (entries.find(e => e.toLowerCase() === name.toLowerCase())) return;
+  entries.push(name);
+
+  // Unlock audio on first interaction
+  try { getAudio().resume(); } catch(e) {}
+  playDing();
+
+  const el = document.getElementById('entry-count');
+  el.textContent = entries.length;
+  el.style.transform = 'scale(1.25)';
+  setTimeout(() => { el.style.transform = 'scale(1)'; el.style.transition = 'transform 0.2s ease'; }, 150);
+}
+
+// ──────────────────────────────────────────────────────
+// DRAW — CURTAIN OPEN
+// ──────────────────────────────────────────────────────
+function startDraw() {
+  if (phase !== 'waiting') return;
+  if (entries.length === 0) { showScreen('no-entries'); return; }
+  phase = 'rolling';
+
+  clearInterval(timerInterval);
+
+  // PORTAL EFFECT
+  const cWrap  = document.getElementById('curtain-wrap');
+  const canvas = document.getElementById('portal-canvas');
+  const ctx    = canvas.getContext('2d');
+  const flash  = document.getElementById('flash');
+
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  cWrap.style.display = 'block';
+
+  const cx = canvas.width  / 2;
+  const cy = canvas.height / 2;
+
+  // Particles that spiral inward then explode outward
+  const particles = Array.from({length: 180}, (_, i) => {
+    const angle  = (i / 180) * Math.PI * 2;
+    const radius = 80 + Math.random() * 300;
+    return {
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius,
+      tx: cx, ty: cy,       // target = center
+      vx: 0, vy: 0,
+      size: Math.random() * 3 + 1,
+      color: Math.random() > 0.4 ? '#f5c842' : (Math.random() > 0.5 ? '#ffffff' : '#a78bfa'),
+      alpha: 1,
+      phase: 'in',        // in | explode
+      speed: 0.04 + Math.random() * 0.04,
+      angle,
+      orbitR: radius,
+      orbitSpeed: (Math.random() - 0.5) * 0.08,
+    };
+  });
+
+  // Vortex rings
+  const rings = Array.from({length: 5}, (_, i) => ({
+    r: 40 + i * 60,
+    alpha: 0.6 - i * 0.1,
+    speed: 0.015 + i * 0.008,
+    angle: 0,
+    dashes: 12 + i * 4,
+  }));
+
+  let startTime  = Date.now();
+  let frameId;
+  let exploded   = false;
+  const IN_DUR   = 2200; // ms spiraling in
+  const HOLD_DUR = 400;  // ms held at center
+  const EXP_DUR  = 600;  // ms explosion
+
+  function drawPortal(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Deep space bg
+    ctx.fillStyle = 'rgba(10,8,18,1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Central glow
+    const glowR = Math.min(t / IN_DUR, 1);
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, 200 * glowR);
+    grd.addColorStop(0,   'rgba(245,200,66,' + (0.25 * glowR) + ')');
+    grd.addColorStop(0.4, 'rgba(120,60,200,' + (0.15 * glowR) + ')');
+    grd.addColorStop(1,   'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 200 * (glowR + 0.1), 0, Math.PI * 2);
+    ctx.fill();
+
+    // Spinning rings
+    rings.forEach(ring => {
+      ring.angle += ring.speed;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ring.angle);
+      ctx.strokeStyle = 'rgba(245,200,66,' + (ring.alpha * glowR) + ')';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([8, (Math.PI * 2 * ring.r) / ring.dashes - 8]);
+      ctx.beginPath();
+      ctx.arc(0, 0, ring.r * glowR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    });
+
+    // Particles spiral in
+    particles.forEach(p => {
+      if (p.phase === 'in') {
+        p.orbitR  = Math.max(0, p.orbitR - p.orbitR * p.speed);
+        p.angle  += p.orbitSpeed * (1 + (1 - p.orbitR / 300) * 3);
+        p.x = cx + Math.cos(p.angle) * p.orbitR;
+        p.y = cy + Math.sin(p.angle) * p.orbitR;
+        if (p.orbitR < 6) { p.x = cx; p.y = cy; }
+      } else {
+        p.x    += p.vx;
+        p.y    += p.vy;
+        p.alpha = Math.max(0, p.alpha - 0.022);
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color.replace(')', ', ' + p.alpha + ')').replace('#', 'rgba(').replace('rgba(', 'rgba(');
+      // simpler: just use globalAlpha
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    // Core bright dot
+    if (glowR > 0.3) {
+      const coreSize = 6 + glowR * 20;
+      const cGrd = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreSize);
+      cGrd.addColorStop(0, 'rgba(255,255,255,' + glowR + ')');
+      cGrd.addColorStop(0.4, 'rgba(245,200,66,0.8)');
+      cGrd.addColorStop(1, 'transparent');
+      ctx.fillStyle = cGrd;
+      ctx.beginPath();
+      ctx.arc(cx, cy, coreSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function animatePortal() {
+    const t = Date.now() - startTime;
+    drawPortal(t);
+
+    if (t < IN_DUR + HOLD_DUR) {
+      frameId = requestAnimationFrame(animatePortal);
+    } else if (!exploded) {
+      exploded = true;
+      cancelAnimationFrame(frameId);
+
+      // Trigger particles outward
+      particles.forEach(p => {
+        p.phase = 'explode';
+        const ang = Math.atan2(p.y - cy, p.x - cx) + (Math.random() - 0.5) * 0.8;
+        const spd = 8 + Math.random() * 14;
+        p.vx = Math.cos(ang) * spd;
+        p.vy = Math.sin(ang) * spd;
+        p.alpha = 1;
+      });
+
+      // Shockwave ring
+      document.getElementById('shockwave').classList.add('burst');
+
+      // BOOM sound
+      playExplosionBoom();
+
+      // White flash
+      flash.classList.add('pop');
+      setTimeout(() => { flash.classList.remove('pop'); }, 100);
+
+      // Spawn EXTRA shards for the explosion — bigger, faster, more dramatic
+      const shards = Array.from({length: 120}, (_, i) => {
+        const ang = (i / 120) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+        const spd = 12 + Math.random() * 22;
+        const colors = ['#f5c842','#fde68a','#ffffff','#a78bfa','#f87171','#60a5fa','#34d399'];
+        return {
+          x: cx, y: cy,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          size: Math.random() * 5 + 2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1,
+          trail: [],
+          gravity: 0.18 + Math.random() * 0.12,
+        };
+      });
+
+      // Shockwave rings — 3 of them staggered
+      let rings2 = [
+        { r: 0, maxR: Math.max(canvas.width, canvas.height) * 0.9, alpha: 1,   delay: 0   },
+        { r: 0, maxR: Math.max(canvas.width, canvas.height) * 0.7, alpha: 0.7, delay: 120 },
+        { r: 0, maxR: Math.max(canvas.width, canvas.height) * 0.5, alpha: 0.5, delay: 240 },
+      ];
+      let expStart = Date.now();
+      const EXP_TOTAL = 1800;
+
+      function animateExplosion() {
+        const et  = Date.now() - expStart;
+        const pct = Math.min(et / EXP_TOTAL, 1);
+
+        // Black bg with lingering gold glow at center fading out
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#0a0812';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Fading core flash
+        if (pct < 0.3) {
+          const flare = 1 - pct / 0.3;
+          const fGrd  = ctx.createRadialGradient(cx, cy, 0, cx, cy, 300 * flare);
+          fGrd.addColorStop(0,   'rgba(255,255,255,' + (0.6 * flare) + ')');
+          fGrd.addColorStop(0.2, 'rgba(245,200,66,' + (0.5 * flare) + ')');
+          fGrd.addColorStop(0.6, 'rgba(100,50,200,' + (0.2 * flare) + ')');
+          fGrd.addColorStop(1,   'transparent');
+          ctx.fillStyle = fGrd;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 300 * flare + 50, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Shockwave rings
+        rings2.forEach(ring => {
+          if (et < ring.delay) return;
+          const rPct = Math.min((et - ring.delay) / (EXP_TOTAL * 0.6), 1);
+          ring.r = ring.maxR * rPct;
+          const rAlpha = ring.alpha * (1 - rPct);
+          if (rAlpha > 0.01) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, ring.r, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(245,200,66,' + rAlpha + ')';
+            ctx.lineWidth = 3 - rPct * 2;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(245,200,66,0.8)';
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+          }
+        });
+
+        // Draw shards with trails
+        shards.forEach(p => {
+          if (p.alpha <= 0) return;
+          // Store trail
+          p.trail.push({x: p.x, y: p.y, a: p.alpha});
+          if (p.trail.length > 8) p.trail.shift();
+
+          // Draw trail
+          p.trail.forEach((tp, ti) => {
+            const ta = tp.a * (ti / p.trail.length) * 0.4;
+            ctx.globalAlpha = ta;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(tp.x, tp.y, p.size * (ti / p.trail.length), 0, Math.PI * 2);
+            ctx.fill();
+          });
+          ctx.globalAlpha = 1;
+
+          // Draw shard
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1;
+
+          // Move
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.vx *= 0.985;
+          p.alpha = Math.max(0, p.alpha - (0.008 + pct * 0.01));
+        });
+
+        // Also draw original spiraling particles still flying out
+        particles.forEach(p => {
+          if (p.alpha <= 0) return;
+          p.x += p.vx * 0.7; p.y += p.vy * 0.7;
+          p.alpha = Math.max(0, p.alpha - 0.014);
+          ctx.globalAlpha = p.alpha;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        });
+
+        if (pct < 1) {
+          requestAnimationFrame(animateExplosion);
+        } else {
+          cWrap.style.display = 'none';
+          document.getElementById('spotlight').classList.add('show');
+          showScreen('stage');
+          document.getElementById('stage-title').classList.add('show');
+          setTimeout(() => startRolling(0), 900);
+        }
+      }
+      requestAnimationFrame(animateExplosion);
+    }
+  }
+
+  playPortalCharge();
+  requestAnimationFrame(animatePortal);
+}
+
+// ──────────────────────────────────────────────────────
+// ROLLING WITH TENSION BAR
+// ──────────────────────────────────────────────────────
+function startRolling(winnerIndex) {
+  const pool   = [...entries].sort(() => Math.random() - 0.5);
+  // If Streamer.bot sent a forced winner via ?winner= param, use it.
+  // This ensures the person Streamer.bot already announced in chat
+  // is the same person the drum animation lands on.
+  const winner = window._forcedWinner
+    ? window._forcedWinner
+    : pool[Math.floor(Math.random() * pool.length)];
+  window._forcedWinner = null; // clear after use
+  // Make sure winner 2 is different from winner 1
+  const pickedWinners = document.querySelectorAll('.winner-name');
+  const prev = Array.from(pickedWinners).map(e => e.textContent.replace('@','').toLowerCase());
+
+  let finalWinner = winner;
+  if (prev.includes(winner.toLowerCase())) {
+    const remaining = entries.filter(e => !prev.includes(e.toLowerCase()));
+    finalWinner = remaining.length > 0
+      ? remaining[Math.floor(Math.random() * remaining.length)]
+      : winner;
+  }
+
+  const statusEl = document.getElementById('status-text');
+  statusEl.textContent = 'DRAWING WINNER ' + (winnerIndex + 1) + ' OF ' + NUM_WINNERS + '…';
+
+  // tension bar removed
+
+  // Phase 1: Fast shuffle (10 seconds)
+  fastShuffle(finalWinner, 10000, () => {
+    // Phase 2: Slow dramatic reveal
+    slowReveal(finalWinner, winnerIndex);
+  });
+}
+
+// ──────────────────────────────────────────────────────
+// FAST SHUFFLE — slot machine reel scrolling
+// ──────────────────────────────────────────────────────
+function fastShuffle(winner, duration, onDone) {
+  const drumWrap = document.getElementById('drum-wrap');
+  const drumReel = document.getElementById('drum-reel');
+  // bar removed
+  const slowName = document.getElementById('slowdown-name');
+
+  drumWrap.style.display = 'block';
+  slowName.style.display = 'none';
+  drumReel.style.display = 'flex';
+
+  // Build a very long reel
+  const REEL_LEN = 80;
+  drumReel.innerHTML = '';
+  for (let i = 0; i < REEL_LEN; i++) {
+    const div = document.createElement('div');
+    div.className = 'drum-name';
+    div.textContent = entries[Math.floor(Math.random() * entries.length)];
+    drumReel.appendChild(div);
+  }
+  // Last item = winner
+  const winDiv = document.createElement('div');
+  winDiv.className = 'drum-name';
+  winDiv.textContent = winner;
+  drumReel.appendChild(winDiv);
+
+  const ITEM_H   = 72;
+  const start    = Date.now();
+  let   pos      = 120; // start mid
+  let   speed    = 28;  // px per frame
+  let   frame    = 0;
+  let   drumTick = 0;
+
+  drumReel.style.transition = 'none';
+  drumReel.style.transform  = `translateY(${pos}px)`;
+
+  function animate() {
+    const elapsed = Date.now() - start;
+    const pct     = Math.min(elapsed / duration, 1);
+
+    // Tension bar grows
+  
+    // Speed: ramp up to max then hold fast
+    if (pct < 0.15) {
+      speed = 8 + pct / 0.15 * 22; // ramp up
+    } else if (pct < 0.85) {
+      speed = 30; // full speed
+    } else {
+      speed = 30 * (1 - (pct - 0.85) / 0.15); // slow slightly at end
+      if (speed < 5) speed = 5;
+    }
+
+    pos -= speed;
+    drumReel.style.transform = `translateY(${pos}px)`;
+
+    // Tick sound
+    drumTick += speed;
+    if (drumTick >= ITEM_H) {
+      drumTick -= ITEM_H;
+      playDrum(speed / 30);
+    }
+
+    // Wrap: when reel scrolls past visible area, reset partway
+    if (Math.abs(pos) > REEL_LEN * ITEM_H - 600) {
+      // Rebuild and reset position
+      drumReel.innerHTML = '';
+      for (let i = 0; i < REEL_LEN; i++) {
+        const div = document.createElement('div');
+        div.className = 'drum-name';
+        div.textContent = entries[Math.floor(Math.random() * entries.length)];
+        drumReel.appendChild(div);
+      }
+      pos = 120;
+      drumReel.style.transform = `translateY(${pos}px)`;
+    }
+
+    frame++;
+    if (elapsed < duration) {
+      requestAnimationFrame(animate);
+    } else {
+      onDone();
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// ──────────────────────────────────────────────────────
+// SLOW REVEAL — names flash one by one, slowing down
+// ──────────────────────────────────────────────────────
+function slowReveal(winner, winnerIndex) {
+  const drumReel  = document.getElementById('drum-reel');
+  const slowName  = document.getElementById('slowdown-name');
+  // bar removed
+  const statusEl  = document.getElementById('status-text');
+
+  drumReel.style.display = 'none';
+  slowName.style.display = 'block';
+
+  statusEl.textContent = '…';
+
+  // Show random names flashing, slowing to a stop
+  const fakeCount = 12;
+  const delays    = [];
+
+  // Exponentially increasing delays — starts fast, ends very slow
+  let t = 0;
+  for (let i = 0; i < fakeCount; i++) {
+    const interval = 80 * Math.pow(1.38, i); // 80ms → ~3500ms
+    t += interval;
+    delays.push(t);
+  }
+  // Final winner after last fake
+  delays.push(t + 1200);
+
+  delays.forEach((delay, i) => {
+    const isWinner = i === delays.length - 1;
+    setTimeout(() => {
+      const name = isWinner
+        ? winner
+        : entries[Math.floor(Math.random() * entries.length)];
+
+      slowName.style.opacity = '0';
+      setTimeout(() => {
+        slowName.textContent = isWinner ? '🎟️ ' + name : name;
+        slowName.style.color = isWinner ? 'var(--gold)' : 'var(--text)';
+        slowName.style.fontSize = isWinner ? 'clamp(2.8rem,5.5vw,4.5rem)' : '';
+        slowName.style.textShadow = isWinner ? '0 0 40px rgba(245,200,66,0.7)' : 'none';
+        slowName.style.opacity = '1';
+
+        if (i < fakeCount) playDrum(0.3 - (i / fakeCount) * 0.25);
+
+        if (isWinner) {
+          playReveal();
+          // Pause on winner name, then show card
+          setTimeout(() => {
+            revealCard(winnerIndex, winner, () => {
+              if (winnerIndex + 1 < NUM_WINNERS) {
+                // Reset for next winner
+                setTimeout(() => {
+                  slowName.style.display = 'none';
+                                                              startRolling(winnerIndex + 1);
+                }, 1000);
+              } else {
+                // All done
+                phase = 'done';
+                slowName.style.display = 'none';
+                              document.getElementById('drum-wrap').style.display = 'none';
+                statusEl.textContent = '🏆 WINNERS SELECTED!';
+                launchConfetti();
+              }
+            });
+          }, 2200);
+        }
+      }, 60);
+    }, delay);
+  });
+}
+
+// ──────────────────────────────────────────────────────
+// WINNER CARD REVEAL
+// ──────────────────────────────────────────────────────
+function revealCard(index, name, cb) {
+  const area = document.getElementById('winners-area');
+  const card = document.createElement('div');
+  card.className = 'winner-card';
+  card.innerHTML = `
+    <div class="winner-label">— WINNER ${index + 1} —</div>
+    <div class="winner-name">@${name}</div>
+  `;
+  area.appendChild(card);
+  requestAnimationFrame(() => requestAnimationFrame(() => card.classList.add('reveal')));
+  setTimeout(cb, 800);
+}
+
+// ──────────────────────────────────────────────────────
+// CONFETTI
+// ──────────────────────────────────────────────────────
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const COLORS = ['#f5c842','#fde68a','#ffffff','#a78bfa','#34d399','#f87171','#60a5fa'];
+  const pieces = Array.from({length: 200}, () => ({
+    x:    Math.random() * canvas.width,
+    y:    Math.random() * -canvas.height * 0.5,
+    w:    Math.random() * 10 + 5,
+    h:    Math.random() * 5 + 3,
+    rot:  Math.random() * 360,
+    rotV: (Math.random() - 0.5) * 7,
+    vx:   (Math.random() - 0.5) * 4,
+    vy:   Math.random() * 4 + 2,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    alpha: 1
+  }));
+
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      if (p.y < canvas.height + 20 && p.alpha > 0.01) {
+        alive = true;
+        p.x += p.vx; p.y += p.vy; p.rot += p.rotV;
+        if (frame > 100) p.alpha = Math.max(0, p.alpha - 0.007);
+        ctx.save();
+        ctx.globalAlpha = p.alpha;
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      }
+    });
+    frame++;
+    if (alive && frame < 400) requestAnimationFrame(draw);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  draw();
+}
+
+// ──────────────────────────────────────────────────────
+// UTIL
+// ──────────────────────────────────────────────────────
+function showScreen(id) {
+  ['waiting','stage','no-entries'].forEach(s => {
+    const el = document.getElementById(s);
+    if (!el) return;
+    el.style.display = s === id ? 'flex' : 'none';
+  });
+}
+
+function resetAll() {
+  entries = [];
+  phase   = 'waiting';
+  timerSeconds = TOTAL_SECONDS;
+  clearInterval(timerInterval);
+  timerRunning = false;
+
+  document.getElementById('entry-count').textContent = '0';
+  document.getElementById('winners-area').innerHTML  = '';
+  document.getElementById('status-text').textContent = '';
+  document.getElementById('stage-title').classList.remove('show');
+  document.getElementById('drum-wrap').style.display = 'none';
+  document.getElementById('slowdown-name').style.display = 'none';
+  document.getElementById('shockwave').classList.remove('burst');
+  document.getElementById('flash').classList.remove('pop');
+  document.getElementById('spotlight').classList.remove('show');
+  document.getElementById('curtain-wrap').style.display = 'none';
+  document.getElementById('timer').classList.remove('flash');
+
+  updateTimerDisplay();
+  showScreen('waiting');
+  startTimer();
+}
+
+// ──────────────────────────────────────────────────────
+// KEYBOARD TEST SHORTCUTS
+// ──────────────────────────────────────────────────────
+const TEST_NAMES = ['segaagenezis','towmatershayder','lowkeymayki','DaggerBoobs','spxderjit','IcaraOrbaan','TestChatter','AnotherViewer','CoolDude99','StreamFan42','VibezKing','NightOwl88'];
+document.addEventListener('keydown', e => {
+  if (e.key === 't' || e.key === 'T') addEntry(TEST_NAMES[entries.length % TEST_NAMES.length]);
+  if (e.key === 's' || e.key === 'S') startDraw();
+  if (e.key === 'r' || e.key === 'R') resetAll();
+});
+
+// ──────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────
+showScreen('waiting');
+handleUrlCommand();
+</script>
+</body>
+</html>
