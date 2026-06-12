@@ -763,37 +763,23 @@ async function handleUrlCommand() {
   const roundId = getParam("round");
   const winner  = getParam("winner");
 
-  // ── cmd=open — Streamer.bot ran !sweepopen
-  //    Opens entries for this round and starts live polling
-  // AFTER — replace the cmd draw block with this
-if (cmd === 'draw') {
-    stopPolling();
-
-    // Read the full entry list passed in the URL from Streamer.bot
-    const rawEntries = getParam('entries');
-    if (rawEntries) {
-        // Decode each name (they were Uri.EscapeDataString encoded)
-        const incomingNames = rawEntries.split('|').map(n => decodeURIComponent(n)).filter(Boolean);
-        // Replace the local entries array with the real Supabase list
-        entries = incomingNames;
-    }
-
-    // Make sure the winner is in the pool so the drum can land on them
-    if (winner) {
-        if (!entries.find(e => e.toLowerCase() === winner.toLowerCase()))
-            entries.push(winner);
-        window.forcedWinner = winner;
-    }
-
-    startDraw();
+  // ── cmd=open ──────────────────────────────────────────
+  if (cmd === "open") {
+    activeRoundId = roundId;
+    try {
+      const existing = await sbRequest("GET", `${SB_TABLE}?round_id=eq.${roundId}&is_active=eq.true&select=username`);
+      if (Array.isArray(existing))
+        existing.forEach(r => {
+          if (!entries.find(e => e.toLowerCase() === r.username.toLowerCase()))
+            entries.push(r.username);
+        });
+      document.getElementById("entry-count").textContent = entries.length;
+    } catch(_) {}
+    startPolling(roundId);
     return;
-}
+  }
 
-  // ── cmd=enter — one chatter typed !enter
-  //    Streamer.bot already wrote them to Supabase;
-  //    we just do a local addEntry so the count updates
-  //    instantly on this browser source without waiting
-  //    for the next poll cycle
+  // ── cmd=enter ─────────────────────────────────────────
   if (cmd === "enter" && user) {
     if (!entries.find(e => e.toLowerCase() === user.toLowerCase())) {
       entries.push(user);
@@ -807,24 +793,28 @@ if (cmd === 'draw') {
     return;
   }
 
-  // ── cmd=draw — you ran !draw
-  //    Streamer.bot already picked the winner and sends
-  //    it in the URL so the animation knows who won
+  // ── cmd=draw ──────────────────────────────────────────
   if (cmd === "draw") {
     stopPolling();
+
+    // Load real Supabase names passed in from Streamer.bot C#
+    const rawEntries = getParam("entries");
+    if (rawEntries) {
+      entries = rawEntries.split("|").map(n => decodeURIComponent(n)).filter(Boolean);
+    }
+
+    // Make sure winner is in the pool so the drum lands on them
     if (winner) {
-      // Inject the decided winner into the pool so the drum
-      // animation always lands on the correct name
       if (!entries.find(e => e.toLowerCase() === winner.toLowerCase()))
         entries.push(winner);
-      // Store so startRolling() can force this outcome
-      window._forcedWinner = winner;
+      window.forcedWinner = winner;
     }
+
     startDraw();
     return;
   }
 
-  // ── cmd=reset — you ran !sweepreset
+  // ── cmd=reset ─────────────────────────────────────────
   if (cmd === "reset") {
     stopPolling();
     activeRoundId = "";
@@ -1154,10 +1144,10 @@ function startRolling(winnerIndex) {
   // If Streamer.bot sent a forced winner via ?winner= param, use it.
   // This ensures the person Streamer.bot already announced in chat
   // is the same person the drum animation lands on.
-  const winner = window._forcedWinner
-    ? window._forcedWinner
+const winner = window.forcedWinner
+    ? window.forcedWinner
     : pool[Math.floor(Math.random() * pool.length)];
-  window._forcedWinner = null; // clear after use
+window.forcedWinner = null; // clear after use
   // Make sure winner 2 is different from winner 1
   const pickedWinners = document.querySelectorAll('.winner-name');
   const prev = Array.from(pickedWinners).map(e => e.textContent.replace('@','').toLowerCase());
