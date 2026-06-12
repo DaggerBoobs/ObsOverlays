@@ -664,7 +664,7 @@ startTimer();
 // ──────────────────────────────────────────────────────
 let entries = [];
 let phase   = 'waiting';
-const NUM_WINNERS = 2;
+const NUM_WINNERS = 1;
 
 // ══════════════════════════════════════════════════════
 // SUPABASE CONFIG
@@ -765,26 +765,29 @@ async function handleUrlCommand() {
 
   // ── cmd=open — Streamer.bot ran !sweepopen
   //    Opens entries for this round and starts live polling
-  if (cmd === "open" && roundId) {
-    activeRoundId = roundId;
-    // Load any entries already in DB for this round
-    // (handles the case where OBS reloaded mid-round)
-    try {
-      const existing = await sbRequest(
-        "GET",
-        `${SB_TABLE}?round_id=eq.${roundId}&is_active=eq.true&select=username`
-      );
-      if (Array.isArray(existing)) {
-        existing.forEach(r => {
-          if (!entries.find(e => e.toLowerCase() === r.username.toLowerCase()))
-            entries.push(r.username);
-        });
-        document.getElementById("entry-count").textContent = entries.length;
-      }
-    } catch(_) {}
-    startPolling(roundId);
+  // AFTER — replace the cmd draw block with this
+if (cmd === 'draw') {
+    stopPolling();
+
+    // Read the full entry list passed in the URL from Streamer.bot
+    const rawEntries = getParam('entries');
+    if (rawEntries) {
+        // Decode each name (they were Uri.EscapeDataString encoded)
+        const incomingNames = rawEntries.split('|').map(n => decodeURIComponent(n)).filter(Boolean);
+        // Replace the local entries array with the real Supabase list
+        entries = incomingNames;
+    }
+
+    // Make sure the winner is in the pool so the drum can land on them
+    if (winner) {
+        if (!entries.find(e => e.toLowerCase() === winner.toLowerCase()))
+            entries.push(winner);
+        window.forcedWinner = winner;
+    }
+
+    startDraw();
     return;
-  }
+}
 
   // ── cmd=enter — one chatter typed !enter
   //    Streamer.bot already wrote them to Supabase;
